@@ -43,6 +43,31 @@ public class MainController implements IMainController, ISocketObserver, IWeight
 			System.err.println("No controllers injected!");
 		}
 	}
+	
+
+	public ISocketController getSocketHandler() {
+		return socketHandler;
+	}
+
+	public void setSocketHandler(ISocketController socketHandler) {
+		this.socketHandler = socketHandler;
+	}
+
+	public IWeightInterfaceController getWeightController() {
+		return weightController;
+	}
+
+	public void setWeightController(IWeightInterfaceController weightController) {
+		this.weightController = weightController;
+	}
+
+	public KeyState getKeyState() {
+		return keyState;
+	}
+
+	public void setKeyState(KeyState keyState) {
+		this.keyState = keyState;
+	}
 
 	//Listening for socket input
 	@Override
