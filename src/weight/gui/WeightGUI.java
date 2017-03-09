@@ -29,7 +29,9 @@ public class WeightGUI implements WeightInterfaceController {
 	}
 
 	public void setApp(FxApp fxApp) {
-		this.fxApp = fxApp; fxApp.setSim(this);
+		System.out.println("set app");
+		this.fxApp = fxApp;
+		fxApp.setSim(this);
 	}
 
 	@Override
@@ -44,7 +46,8 @@ public class WeightGUI implements WeightInterfaceController {
 
 	@Override
 	public void showMessagePrimaryDisplay(String string) {
-		fxApp.printLoad(string);
+		System.out.println("fxApp = " + fxApp);
+		this.fxApp.printLoad(string);
 	}
 
 	@Override

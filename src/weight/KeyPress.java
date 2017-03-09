@@ -35,7 +35,9 @@ public class KeyPress {
 	}
 	
 	private KeyPress(int keyNumber, char character, KeyPressType type){
-		this.keyNumber=keyNumber; this.character=character; this.type=type;
+		this.keyNumber=keyNumber;
+		this.character=character;
+		this.type=type;
 	}
 	
 	public int getKeyNumber() {

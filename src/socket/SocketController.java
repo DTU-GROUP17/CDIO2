@@ -2,7 +2,7 @@ package socket;
 
 import Observables.Observable;
 
-public abstract class SocketController extends Observable<SocketInMessage> implements Runnable{
+public abstract class SocketController extends Observable<InMessage> implements Runnable{
 	protected int port = 6700;
 
 	public SocketController(int port) {
@@ -10,5 +10,5 @@ public abstract class SocketController extends Observable<SocketInMessage> imple
 		this.port = port;
 	}
 
-	abstract public void sendMessage(SocketOutMessage message);
+	abstract public void sendMessage(OutMessage message);
 }

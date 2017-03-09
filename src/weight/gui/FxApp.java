@@ -41,6 +41,7 @@ public class FxApp extends Application {
 	public static void go(){
 		launch();
 	}
+
 	@Override
 	public void start(Stage primaryStage) {
 		try {
@@ -152,9 +153,16 @@ public class FxApp extends Application {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void init() throws Exception {
+		System.out.println("fxapp init");
 		WeightGUI.getInstance().setApp(this);
 	}
-	public FxApp() {} 
+
+	public FxApp() {
+	}
 
 	public void setSim(WeightGUI l){
 		this.l = l;
