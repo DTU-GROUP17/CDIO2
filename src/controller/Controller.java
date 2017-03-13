@@ -1,12 +1,14 @@
 package controller;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import socket.*;
 import weight.WeightInterfaceController;
 import weight.KeyPress;
 
-import java.util.Objects;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
-import static javafx.application.Application.launch;
 
 /**
  * Controller - integrating input from socket and ui. Implements ISocketObserver and IUIObserver to handle this.
@@ -20,16 +22,21 @@ public class Controller implements MainController {
 	private WeightInterfaceController weightInterface;
 	private KeyState keyState = KeyState.K1;
 
-	private Double weightValue;
-	private Double taraValue;
+	private double weightValue;
+	private double taraValue;
 	private String userInput;
+	private String userInputAppend;
+	private boolean waitingOnUserInput;
+	private int showUserInputAs;
 
-	public Controller(SocketController socketHandler, WeightInterfaceController uiController) {
+	public Controller(@NotNull SocketController socketHandler, @NotNull WeightInterfaceController uiController) {
 		this.socketHandler = socketHandler;
 		this.weightInterface = uiController;
 		this.weightValue = 0.0;
 		this.taraValue = 0.0;
 		this.userInput = "";
+		this.userInputAppend = "";
+		this.showUserInputAs = 8;
 	}
 
 	@Override
@@ -42,68 +49,124 @@ public class Controller implements MainController {
 		//TODO: If ui thread is called before it finishes loading it may crash.
 	}
 
-	public void onSocketMessage(InMessage message) {
-		switch (message.getCommand()) {
-		case B:
-			//TODO ???
-			break;
-		case D:
-			this.handleDMessage(message);
-			break;
-		case Q:
-			System.exit(0);
-			break;
-		case RM20:
-			break;
-		case S:
-			this.handleSMessage(message);
-			break;
-		case T:
-			this.handleTMessage(message);
-			break;
-		case DW:
-			break;
-		case K:
-			this.handleKMessage(message);
-			break;
-		case P111:
-			handleP111Message(message);
-			break;
+	/**
+	 * Handles all the incoming messages from the socket.
+	 *
+	 * It will check for methods named <code>handle{command}Message(InMessage)</code>
+	 * and execute them, else it will tell the client that
+	 * we do not understand the given command.
+	 * It will return an halting command if <code>waitingOnUserInput</code>
+	 * is true.
+	 *
+	 * @param message received from socket
+	 */
+	private void onSocketMessage(@NotNull InMessage message) {
+		Class<?> c = this.getClass();
+		Method method;
+
+		try {
+			// We start by checking if a method with the given command exist,
+			// if not we return an unknown message to the user.
+			method = c.getDeclaredMethod ("handle"+message.getCommand()+"Message", InMessage.class);
+
+			// Afterwards we check if we are waiting any user input, if we
+			// are, then we return the halting command.
+			if(this.waitingOnUserInput) {
+				socketHandler.sendMessage(
+					new OutMessage(message.getCommand())
+						.halted()
+				);
+			}
+
+			// If we are not waiting, then we will just invoke the method.
+			method.invoke (this, message);
+
+		} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+			socketHandler.sendMessage(new OutMessage(Message.Command.ES));
 		}
+
 	}
 
-	private void setKeyStateAndSend(KeyState state){
+	private void setKeyStateAndSend(@NotNull KeyState state){
 		this.keyState = state;
 		socketHandler.sendMessage(new OutMessage(Message.Command.K).addFlag("A"));
 	}
 
-	private void handleRM20Message(InMessage message){
+	private void handleQMessage(@NotNull InMessage message) {
+		System.exit(0);
+	}
+
+	private void handleDWMessage(@NotNull InMessage message) {
+		this.userInput = "";
+		this.showPrimaryMessage(this.userInput);
+
+		socketHandler.sendMessage(
+				new OutMessage(Message.Command.DW)
+					.addFlag("A")
+		);
+	}
+
+	private void handleRM20Message(@NotNull InMessage message){
 		try {
-			if (!Objects.equals(message.getFlag(0), "8")){
+			// Lets define our data received first.
+			String promptString = message.getContent(0);
+			int inputType = Integer.parseInt(message.getFlag(0));
+			String defaultInput = message.getContent(1);
+			String unitInput = message.getContent(2);
+
+			// Validation of received data
+			if(promptString.length() > 24) {
+				throw new MessageArgumentException();
+			}
+			if(unitInput.length() > 7) {
+				throw new MessageArgumentException();
+			}
+			if(inputType != 8) {
 				throw new MessageArgumentException();
 			}
 
-		} catch (MessageArgumentException e){
-			socketHandler.sendMessage(new OutMessage(Message.Command.RM20).addFlag("L"));
+
+			this.showPrimaryMessage(message.getContent(0));
+
+			// Sets the user input type and reset current user input.
+			this.showUserInputAs = Integer.parseInt(message.getFlag(0));
+			this.userInput = "";
+
+			// Adds the unit to the display and shows it with the default text.
+			this.userInputAppend = message.getContent(2);
+			this.showSecondaryMessage(message.getContent(1));
+
+			// Sends the executed but waiting for user input command.
+			socketHandler.sendMessage(
+					new OutMessage(Message.Command.RM20)
+						.waitingForUserInput()
+			);
+
+		} catch (MessageArgumentException|NumberFormatException e){
+			socketHandler.sendMessage(
+					new OutMessage(Message.Command.RM20)
+						.wrongParameters()
+			);
 		}
 	}
 
-	private void handleP111Message(InMessage message) {
+	private void handleP111Message(@NotNull InMessage message) {
 		String value = "";
 		try {
 			value = message.getContent(0);
 		} catch (MessageArgumentException e){
-			socketHandler.sendMessage(new OutMessage(Message.Command.P111).addFlag("L"));
+			socketHandler.sendMessage(new OutMessage(Message.Command.P111).wrongParameters());
 		}
+
 		if (value.length()<=30){
-			this.weightInterface.showMessageSecondaryDisplay(value);
+			this.showSecondaryMessage(value);
 		} else {
-			socketHandler.sendMessage(new OutMessage(Message.Command.P111).addFlag("L"));
+			socketHandler.sendMessage(new OutMessage(Message.Command.P111).wrongParameters());
 		}
 
 	}
 
-	private void handleTMessage(InMessage message){
+	private void handleTMessage(@NotNull InMessage message){
 		this.taraValue = this.weightValue;
 		socketHandler.sendMessage(
 			new OutMessage(Message.Command.S)
@@ -113,23 +176,23 @@ public class Controller implements MainController {
 		);
 	}
 
-	private void handleDMessage(InMessage message){
+	private void handleDMessage(@NotNull InMessage message){
 		try{
-			this.weightInterface.showMessagePrimaryDisplay(message.getContent(0));
+			this.showPrimaryMessage(message.getContent(0));
 			socketHandler.sendMessage(
 				new OutMessage(Message.Command.D)
-					.addFlag("A")
+					.acknowledged()
 			);
 		} catch (MessageArgumentException e){
 			socketHandler.sendMessage(
 				new OutMessage(Message.Command.D)
-					.addFlag("L")
+					.wrongParameters()
 			);
 		}
 
 	}
 
-	private void handleSMessage(InMessage message){
+	private void handleSMessage(@NotNull InMessage message){
 		socketHandler.sendMessage(
 			new OutMessage(Message.Command.S)
 			.addFlag("S")
@@ -138,8 +201,8 @@ public class Controller implements MainController {
 		);
 	}
 
-	private void handleKMessage(InMessage message){
-		String value = "";
+	private void handleKMessage(@NotNull InMessage message){
+		String value;
 		try{
 			value = message.getContent(0);
 		} catch (MessageArgumentException e){
@@ -165,57 +228,109 @@ public class Controller implements MainController {
 		}
 	}
 
-	public void onKeyPress(KeyPress keyPress) {
-		if (keyState.equals(KeyState.K3) ){
-			socketHandler.sendMessage(
-				new OutMessage(Message.Command.K)
-				.addFlag("C")
-				.addFlag(Integer.toString(keyPress.getKeyNumber()))
-			);
+	private void onKeyPress(@NotNull KeyPress keyPress) {
+		if(keyState.equals(KeyState.K3)) {
+			HandleK3KeyState(keyPress);
 			return;
 		}
-		switch (keyPress.getType()) {
-		case SOFTBUTTON:
-			break;
-		case TARA:
-			break;
-		case TEXT:
-			this.userInput += keyPress.getCharacter();
-			break;
-		case ZERO:
-			break;
-		case C:
-			break;
-		case EXIT:
-			break;
-		case SEND:
 
-			break;
+		if(keyState.equals(KeyState.K4)) {
+			HandleK4KeyState(keyPress);
 		}
-		if (keyState.equals(KeyState.K4)){
+
+		System.out.println(keyPress.getCharacter());
+		System.out.println(keyPress.getKeyNumber());
+		System.out.println(keyPress.getType());
+
+
+		switch (keyPress.getType()) {
+			case SOFTBUTTON:
+				break;
+			case TARA:
+				break;
+			case TEXT:
+				this.userInput += keyPress.getCharacter();
+				break;
+			case ZERO:
+				break;
+			case C:
+				this.userInput = "";
+				break;
+			case EXIT:
+				handleExitKeyPress();
+				break;
+			case SEND:
+				handleSendKeyPress();
+				break;
+		}
+
+		// Shows the new character on the display.
+		this.showSecondaryMessage(this.userInput);
+	}
+
+	private void handleSendKeyPress() {
+		// If we are waiting on user input and send is pressed,
+		// we will send the user input and no longer be waiting
+		// for user input.
+		if(waitingOnUserInput) {
 			socketHandler.sendMessage(
-				new OutMessage(Message.Command.K)
-				.addFlag("A")
-				.addFlag(Integer.toString(keyPress.getKeyNumber()))
+				new OutMessage(Message.Command.RM20)
+					.addFlag("A")
+						.addContent(this.userInput)
+			);
+			this.waitingOnUserInput = false;
+			this.userInput = "";
+		}
+	}
+
+	private void handleExitKeyPress() {
+		// If we are waiting on user input and exit is pressed,
+		// we will send an aborted message and no longer be
+		// waiting for user input.
+		if(waitingOnUserInput) {
+			this.waitingOnUserInput = false;
+			socketHandler.sendMessage(
+				new OutMessage(Message.Command.RM20)
+					.aborted()
 			);
 		}
-
+		this.userInput = "";
 	}
 
-	public void onWeightChange(Double value) {
+	private void HandleK4KeyState(@NotNull KeyPress keyPress) {
+		socketHandler.sendMessage(
+			new OutMessage(Message.Command.K)
+				.addFlag("A")
+				.addFlag(Integer.toString(keyPress.getKeyNumber()))
+		);
+	}
+
+	private void HandleK3KeyState(@NotNull KeyPress keyPress) {
+		socketHandler.sendMessage(
+			new OutMessage(Message.Command.K)
+				.addFlag("C")
+				.addFlag(Integer.toString(keyPress.getKeyNumber()))
+		);
+	}
+
+	private void onWeightChange(double value) {
 		this.weightValue = value;
-		this.weightInterface.showMessagePrimaryDisplay(this.getCurrentWeightValue().toString());
+		this.showPrimaryMessage(this.getCurrentWeightValue().toString());
 	}
 
+	@NotNull
+	@Contract(pure = true)
 	private Double getCurrentWeightValue(){
 		return this.weightValue-this.taraValue;
 	}
 
-	private String harvestUserInpuy(){
-		this.weightInterface.showMessageSecondaryDisplay("");
-		String value = this.userInput;
-		this.userInput = "";
-		return value;
+	private void showPrimaryMessage(@NotNull String string)
+	{
+		this.weightInterface.showMessagePrimaryDisplay(string);
 	}
 
+	private void showSecondaryMessage(@NotNull String string)
+	{
+		this.weightInterface.showMessageSecondaryDisplay(string+" "+this.userInputAppend);
+	}
 }

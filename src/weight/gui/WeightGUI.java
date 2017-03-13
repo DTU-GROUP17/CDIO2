@@ -46,7 +46,6 @@ public class WeightGUI implements WeightInterfaceController {
 
 	@Override
 	public void showMessagePrimaryDisplay(String string) {
-		System.out.println("fxApp = " + fxApp);
 		this.fxApp.printLoad(string);
 	}
 
@@ -81,10 +80,10 @@ public class WeightGUI implements WeightInterfaceController {
 		}
 		boolean[] sftkeysChecked = new boolean[texts.length];
 		Arrays.fill(sftkeysChecked, false);
-		fxApp.softkeysShow(texts, firstSoftkey, sftkeysChecked);
+		fxApp.softKeysShow(texts, firstSoftkey, sftkeysChecked);
 	}
 
-	public void onSliderValueChange(Double newValue) {
+	void onSliderValueChange(Double newValue) {
 		this.weightFeed.notifyAll(newValue/1000);
 	}
 
@@ -104,36 +103,16 @@ public class WeightGUI implements WeightInterfaceController {
 		this.keyFeed.notifyAll(KeyPress.Send());
 	}
 
-	public void onNumBtnPressed(char btn){
+	void onNumBtnPressed(char btn){
 		this.keyFeed.notifyAll(KeyPress.Character(btn));
 	}
 
-	public void onSoftBtnPressed(int i) {
+	void onSoftBtnPressed(int i) {
 		this.keyFeed.notifyAll(KeyPress.SoftButton(i));
 	}
-	
-	
-	
-	
-	
-	
-	
 
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
+	void onCancelButtonPressed() {
+		this.keyFeed.notifyAll(KeyPress.Cancel());
+	}
 }

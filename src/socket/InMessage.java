@@ -25,7 +25,15 @@ public class InMessage extends Message<InMessage> {
 		MatchResult mm = m.toMatchResult();
 		m.find();
 		String command = m.group();
-		InMessage message = new InMessage(Command.valueOf(command));
+
+		InMessage message;
+
+		try{
+			message = new InMessage(Command.valueOf(command));
+		}
+		catch (IllegalArgumentException e) {
+			message = new InMessage(Command.UNKNOWN);
+		}
 
 		while (m.find()){
 			message.addFlag(m.group());

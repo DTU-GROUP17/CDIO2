@@ -17,6 +17,7 @@ public class SocketConnection extends SocketController {
 	@Override
 	public void sendMessage(OutMessage message) {
 		this.outStream.write(message.toString());
+		this.outStream.flush();
 	}
 
 	@Override
