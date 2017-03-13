@@ -25,6 +25,4 @@ public class OutMessage extends Message<OutMessage> {
 		return message + "\r\n";
 	}
 
-
-
 }

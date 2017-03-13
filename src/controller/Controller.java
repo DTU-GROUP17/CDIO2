@@ -46,7 +46,6 @@ public class Controller implements MainController {
 		this.weightInterface.getWeightFeed().addObserver(this::onWeightChange);
 		new Thread(this.weightInterface).start();
 		new Thread(this.socketHandler).start();
-		//TODO: If ui thread is called before it finishes loading it may crash.
 	}
 
 	/**
@@ -61,31 +60,51 @@ public class Controller implements MainController {
 	 * @param message received from socket
 	 */
 	private void onSocketMessage(@NotNull InMessage message) {
-		Class<?> c = this.getClass();
-		Method method;
-
-		try {
-			// We start by checking if a method with the given command exist,
-			// if not we return an unknown message to the user.
-			method = c.getDeclaredMethod ("handle"+message.getCommand()+"Message", InMessage.class);
-
-			// Afterwards we check if we are waiting any user input, if we
-			// are, then we return the halting command.
-			if(this.waitingOnUserInput && message.getCommand() != Message.Command.RM20) {
-				socketHandler.sendMessage(
-					new OutMessage(message.getCommand())
-						.halted()
-				);
-				return;
-			}
-
-			// If we are not waiting, then we will just invoke the method.
-			method.invoke (this, message);
-
-		} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-			socketHandler.sendMessage(new OutMessage(Message.Command.ES));
+		//Return halting if waiting for user input
+		if (
+			this.waitingOnUserInput
+			&& message.getCommand() != Message.Command.RM20
+			&& message.getCommand() != Message.Command.Q
+		){
+			socketHandler.sendMessage(
+				new OutMessage(message.getCommand())
+					.halted()
+			);
+			return;
 		}
 
+		switch (message.getCommand()) {
+			case B:
+				this.handleBMessage(message);
+				break;
+			case D:
+				this.handleDMessage(message);
+				break;
+			case Q:
+				this.handleQMessage(message);
+				break;
+			case S:
+				this.handleSMessage(message);
+				break;
+			case T:
+				this.handleTMessage(message);
+				break;
+			case DW:
+				this.handleDWMessage(message);
+				break;
+			case K:
+				this.handleKMessage(message);
+				break;
+			case RM20:
+				this.handleRM20Message(message);
+				break;
+			case P111:
+				this.handleP111Message(message);
+				break;
+			case UNKNOWN:
+				this.handleUnknownMessage(message);
+				break;
+		}
 	}
 
 	private void setKeyStateAndSend(@NotNull KeyState state){
@@ -99,8 +118,27 @@ public class Controller implements MainController {
 	 * @param message received from socket
 	 */
 	private void handleQMessage(@NotNull InMessage message) {
-		socketHandler.sendMessage(new OutMessage(Message.Command.Q).acknowledged());
+		socketHandler.sendMessage(
+			new OutMessage(Message.Command.Q)
+				.acknowledged()
+		);
 		System.exit(0);
+	}
+
+	private void handleBMessage(@NotNull InMessage message){
+		try {
+			this.weightValue = Double.parseDouble(message.getFlag(0));
+			socketHandler.sendMessage(
+				new OutMessage(Message.Command.B)
+					.waitingForUserInput()
+			);
+		} catch (MessageArgumentException e){
+			socketHandler.sendMessage(
+				new OutMessage(Message.Command.B)
+					.wrongParameters()
+			);
+		}
+
 	}
 
 	/**
@@ -115,6 +153,12 @@ public class Controller implements MainController {
 		socketHandler.sendMessage(
 			new OutMessage(Message.Command.DW)
 				.acknowledged()
+		);
+	}
+
+	private void handleUnknownMessage(@NotNull InMessage message){
+		this.socketHandler.sendMessage(
+			new OutMessage(Message.Command.ES)
 		);
 	}
 
@@ -206,7 +250,7 @@ public class Controller implements MainController {
 	}
 
 	/**
-	 * T - Tare
+	 * T - Tara
 	 *
 	 * @param message received from socket
 	 */
@@ -288,13 +332,13 @@ public class Controller implements MainController {
 	}
 
 	private void onKeyPress(@NotNull KeyPress keyPress) {
-		if(keyState.equals(KeyState.K3)) {
-			HandleK3KeyState(keyPress);
+		if (keyState.equals(KeyState.K2)){
 			return;
-		}
-
-		if(keyState.equals(KeyState.K4)) {
-			HandleK4KeyState(keyPress);
+		} else if(keyState.equals(KeyState.K3)) {
+			this.HandleK3KeyState(keyPress);
+			return;
+		} else if(keyState.equals(KeyState.K4)) {
+			this.HandleK4KeyState(keyPress);
 		}
 
 		switch (keyPress.getType()) {
@@ -326,7 +370,7 @@ public class Controller implements MainController {
 		// If we are waiting on user input and send is pressed,
 		// we will send the user input and no longer be waiting
 		// for user input.
-		if(waitingOnUserInput) {
+		if(this.waitingOnUserInput) {
 			socketHandler.sendMessage(
 				new OutMessage(Message.Command.RM20)
 					.acknowledged()
