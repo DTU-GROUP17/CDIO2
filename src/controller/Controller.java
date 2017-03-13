@@ -71,11 +71,12 @@ public class Controller implements MainController {
 
 			// Afterwards we check if we are waiting any user input, if we
 			// are, then we return the halting command.
-			if(this.waitingOnUserInput || message.getCommand() == Message.Command.RM20) {
+			if(this.waitingOnUserInput && message.getCommand() != Message.Command.RM20) {
 				socketHandler.sendMessage(
 					new OutMessage(message.getCommand())
 						.halted()
 				);
+				return;
 			}
 
 			// If we are not waiting, then we will just invoke the method.
@@ -182,6 +183,11 @@ public class Controller implements MainController {
 		}
 	}
 
+	/**
+	 * P111 - Secondary display
+	 *
+	 * @param message received from socket
+	 */
 	private void handleP111Message(@NotNull InMessage message) {
 		String value = "";
 		try {
@@ -199,16 +205,26 @@ public class Controller implements MainController {
 
 	}
 
+	/**
+	 * T - Tare
+	 *
+	 * @param message received from socket
+	 */
 	private void handleTMessage(@NotNull InMessage message){
 		this.taraValue = this.weightValue;
 		socketHandler.sendMessage(
-			new OutMessage(Message.Command.S)
+			new OutMessage(Message.Command.T)
 				.weight()
 				.addFlag(String.format("%10s", this.taraValue))
 				.addFlag("kg")
 		);
 	}
 
+	/**
+	 * D - Primary display
+	 *
+	 * @param message received from socket
+	 */
 	private void handleDMessage(@NotNull InMessage message){
 		try{
 			this.showPrimaryMessage(message.getContent(0));
@@ -225,6 +241,11 @@ public class Controller implements MainController {
 
 	}
 
+	/**
+	 * S - Current weight
+	 *
+	 * @param message received from socket
+	 */
 	private void handleSMessage(@NotNull InMessage message){
 		socketHandler.sendMessage(
 			new OutMessage(Message.Command.S)
@@ -234,6 +255,11 @@ public class Controller implements MainController {
 		);
 	}
 
+	/**
+	 * S - Key control
+	 *
+	 * @param message received from socket
+	 */
 	private void handleKMessage(@NotNull InMessage message){
 		String value;
 		try{
