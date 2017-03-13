@@ -93,6 +93,7 @@ public class Controller implements MainController {
 	}
 
 	private void handleQMessage(@NotNull InMessage message) {
+		socketHandler.sendMessage(new OutMessage(Message.Command.Q).acknowledged());
 		System.exit(0);
 	}
 
@@ -101,8 +102,8 @@ public class Controller implements MainController {
 		this.showPrimaryMessage(this.userInput);
 
 		socketHandler.sendMessage(
-				new OutMessage(Message.Command.DW)
-					.addFlag("A")
+			new OutMessage(Message.Command.DW)
+				.acknowledged()
 		);
 	}
 
@@ -162,6 +163,7 @@ public class Controller implements MainController {
 
 		if (value.length()<=30){
 			this.showSecondaryMessage(value);
+			socketHandler.sendMessage(new OutMessage(Message.Command.P111).acknowledged());
 		} else {
 			socketHandler.sendMessage(new OutMessage(Message.Command.P111).wrongParameters());
 		}
@@ -172,9 +174,9 @@ public class Controller implements MainController {
 		this.taraValue = this.weightValue;
 		socketHandler.sendMessage(
 			new OutMessage(Message.Command.S)
-				.addFlag("S")
+				.weight()
 				.addFlag(String.format("%10s", this.taraValue))
-				.addFlag("g")
+				.addFlag("kg")
 		);
 	}
 
@@ -197,9 +199,9 @@ public class Controller implements MainController {
 	private void handleSMessage(@NotNull InMessage message){
 		socketHandler.sendMessage(
 			new OutMessage(Message.Command.S)
-			.addFlag("S")
+			.weight()
 			.addFlag(String.format("%10s", this.getCurrentWeightValue()))
-			.addFlag("g")
+			.addFlag("kg")
 		);
 	}
 
@@ -208,7 +210,7 @@ public class Controller implements MainController {
 		try{
 			value = message.getContent(0);
 		} catch (MessageArgumentException e){
-			socketHandler.sendMessage(new OutMessage(Message.Command.K).addFlag("L"));
+			socketHandler.sendMessage(new OutMessage(Message.Command.K).wrongParameters());
 			return;
 		}
 		switch (value) {
@@ -225,7 +227,7 @@ public class Controller implements MainController {
 			this.setKeyStateAndSend(KeyState.K4);
 			break;
 		default:
-			socketHandler.sendMessage(new OutMessage(Message.Command.K).addFlag("L"));
+			socketHandler.sendMessage(new OutMessage(Message.Command.K).wrongParameters());
 			break;
 		}
 	}
@@ -272,7 +274,7 @@ public class Controller implements MainController {
 		if(waitingOnUserInput) {
 			socketHandler.sendMessage(
 				new OutMessage(Message.Command.RM20)
-					.addFlag("A")
+					.acknowledged()
 						.addContent(this.userInput)
 			);
 			this.waitingOnUserInput = false;
@@ -299,7 +301,7 @@ public class Controller implements MainController {
 	private void HandleK4KeyState(@NotNull KeyPress keyPress) {
 		socketHandler.sendMessage(
 			new OutMessage(Message.Command.K)
-				.addFlag("A")
+				.acknowledged()
 				.addFlag(Integer.toString(keyPress.getKeyNumber()))
 		);
 	}

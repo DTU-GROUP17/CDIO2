@@ -52,6 +52,10 @@ public abstract class Message<T extends Message<T>> {
 		return this.addFlag("A");
 	}
 
+	public T weight() {
+		return this.addFlag("S");
+	}
+
 	public T halted() {
 		return this.addFlag("I");
 	}
