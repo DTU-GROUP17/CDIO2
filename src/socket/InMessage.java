@@ -9,7 +9,7 @@ public class InMessage extends Message<InMessage> {
 
 	private static final Pattern getFlags = Pattern.compile("(?<=\\s|^)(?<!\")([^\"\\s]*)(?!\")(?=\\s|$)");
 
-	private static final Pattern getContent = Pattern.compile("(?<=(\\s|^)\")([^\"\\s]*)(?=\"(\\s|$))");
+	private static final Pattern getContent = Pattern.compile("(?<=(\\s|^)\")([^\"]*)(?=\"(\\s|$))");
 
 	public InMessage(Command command, ArrayList<String> flags, ArrayList<String> content) {
 		super(command, flags, content);
