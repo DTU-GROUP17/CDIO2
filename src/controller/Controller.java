@@ -385,13 +385,11 @@ public class Controller implements MainController {
 		return this.weightValue-this.taraValue;
 	}
 
-	private void showPrimaryMessage(@NotNull String message)
-	{
+	private void showPrimaryMessage(@NotNull String message) {
 		this.weightInterface.showMessagePrimaryDisplay(message);
 	}
 
-	private void showSecondaryMessage(@NotNull String message)
-	{
+	private void showSecondaryMessage(@NotNull String message) {
 		String messageShow;
 		switch (showUserInputAs) {
 			case 8:
