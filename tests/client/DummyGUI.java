@@ -5,6 +5,9 @@ import weight.KeyPress;
 import weight.WeightInterfaceController;
 
 public class DummyGUI implements WeightInterfaceController {
+	public String primaryDisplay;
+
+
 	@Override
 	public Observable<KeyPress> getKeyFeed() {
 		return new Observable<>();
@@ -17,7 +20,7 @@ public class DummyGUI implements WeightInterfaceController {
 
 	@Override
 	public void showMessagePrimaryDisplay(String string) {
-
+		this.primaryDisplay = string;
 	}
 
 	@Override

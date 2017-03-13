@@ -1,5 +1,7 @@
 package client;
 
+import socket.Message;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -29,13 +31,17 @@ public class DummyClient{
 		return this;
 	}
 
-	public DummyClient expectsReceived(String receiving) throws Exception{
-		assertThat(receiving).isEqualTo(in.readLine());
+	public DummyClient expectsReceived(String receiving) throws Exception {
+		assertThat(receiving).isEqualTo(in.readLine() + LINE_SEPARATOR);
 		return this;
 	}
 
+	public DummyClient expectsReceived(Message message) throws Exception {
+		return expectsReceived(message.toString());
+	}
+
 	public DummyClient expectsReceivedContains(String receiving) throws Exception {
-		assertThat(in.readLine()).contains(receiving);
+		assertThat(in.readLine() + LINE_SEPARATOR).contains(receiving);
 		return this;
 	}
 }
