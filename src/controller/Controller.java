@@ -323,13 +323,24 @@ public class Controller implements MainController {
 		return this.weightValue-this.taraValue;
 	}
 
-	private void showPrimaryMessage(@NotNull String string)
+	private void showPrimaryMessage(@NotNull String message)
 	{
-		this.weightInterface.showMessagePrimaryDisplay(string);
+		this.weightInterface.showMessagePrimaryDisplay(message);
 	}
 
-	private void showSecondaryMessage(@NotNull String string)
+	private void showSecondaryMessage(@NotNull String message)
 	{
-		this.weightInterface.showMessageSecondaryDisplay(string+" "+this.userInputAppend);
+		String messageShow;
+		switch (showUserInputAs) {
+			case 8:
+				messageShow = message;
+				break;
+			case 11:
+				messageShow = new String(new char[message.length()]).replace("\0", message);
+				break;
+			default:
+				messageShow = message;
+		}
+		this.weightInterface.showMessageSecondaryDisplay(messageShow+" "+this.userInputAppend);
 	}
 }

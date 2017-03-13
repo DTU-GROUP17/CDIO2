@@ -29,7 +29,6 @@ public class WeightGUI implements WeightInterfaceController {
 	}
 
 	public void setApp(FxApp fxApp) {
-		System.out.println("set app");
 		this.fxApp = fxApp;
 		fxApp.setSim(this);
 	}
