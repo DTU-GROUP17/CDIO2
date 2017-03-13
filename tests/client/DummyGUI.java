@@ -21,6 +21,7 @@ public class DummyGUI implements WeightInterfaceController {
 	@Override
 	public void showMessagePrimaryDisplay(String string) {
 		this.primaryDisplay = string;
+		System.out.println(primaryDisplay);
 	}
 
 	@Override

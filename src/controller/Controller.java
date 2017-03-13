@@ -19,7 +19,7 @@ import java.lang.reflect.Method;
 public class Controller implements MainController {
 
 	private SocketController socketHandler;
-	private WeightInterfaceController weightInterface;
+	public WeightInterfaceController weightInterface;
 	private KeyState keyState = KeyState.K1;
 
 	private double weightValue;
@@ -110,7 +110,7 @@ public class Controller implements MainController {
 	 */
 	private void handleDWMessage(@NotNull InMessage message) {
 		this.userInput = "";
-		this.showPrimaryMessage(this.userInput);
+		this.showPrimaryMessage(this.getCurrentWeightValue().toString());
 
 		socketHandler.sendMessage(
 			new OutMessage(Message.Command.DW)

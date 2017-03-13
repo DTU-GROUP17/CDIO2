@@ -11,10 +11,12 @@ import socket.Message;
 import socket.OutMessage;
 import socket.SocketConnection;
 
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ControllerTest {
 	private DummyClient client;
 	private Controller controller;
+	private DummyGUI gui;
 
 	@Rule
 	public final ExpectedSystemExit exit = ExpectedSystemExit.none();
@@ -28,12 +30,14 @@ public class ControllerTest {
 		controller.start();
 
 		client = new DummyClient("localhost", 6700);
+		gui = (DummyGUI) controller.weightInterface;
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		client = null;
 		controller = null;
+		gui = null;
 	}
 
 	@Test
@@ -46,8 +50,10 @@ public class ControllerTest {
 
 	@Test
 	public void testDWCommandValid() throws Exception {
-		client.send("DW \"Show me\"");
+
+		client.send("DW");
 
 		client.expectsReceived(new OutMessage(Message.Command.DW).acknowledged());
+		//assertThat(gui.primaryDisplay).isEqualTo();
 	}
 }
