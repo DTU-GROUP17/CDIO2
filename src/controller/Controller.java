@@ -71,7 +71,7 @@ public class Controller implements MainController {
 
 			// Afterwards we check if we are waiting any user input, if we
 			// are, then we return the halting command.
-			if(this.waitingOnUserInput) {
+			if(this.waitingOnUserInput || message.getCommand() == Message.Command.RM20) {
 				socketHandler.sendMessage(
 					new OutMessage(message.getCommand())
 						.halted()
@@ -92,11 +92,21 @@ public class Controller implements MainController {
 		socketHandler.sendMessage(new OutMessage(Message.Command.K).acknowledged());
 	}
 
+	/**
+	 * Q - Quit
+	 *
+	 * @param message received from socket
+	 */
 	private void handleQMessage(@NotNull InMessage message) {
 		socketHandler.sendMessage(new OutMessage(Message.Command.Q).acknowledged());
 		System.exit(0);
 	}
 
+	/**
+	 * DW - Empty screen
+	 *
+	 * @param message received from socket
+	 */
 	private void handleDWMessage(@NotNull InMessage message) {
 		this.userInput = "";
 		this.showPrimaryMessage(this.userInput);
@@ -107,11 +117,31 @@ public class Controller implements MainController {
 		);
 	}
 
+	/**
+	 * RM20 - Activate/Deactivate user input of value/text
+	 *
+	 * @param message received from socket
+	 */
 	private void handleRM20Message(@NotNull InMessage message){
 		try {
+			// We start by checking if we are aborting user input
+			// or if we are asking for a user input.
+			int inputType = Integer.parseInt(message.getFlag(0));
+
+			// Aborting user input.
+			if(inputType == 0) {
+				if(!this.waitingOnUserInput) {
+					socketHandler.sendMessage(new OutMessage(Message.Command.RM20).halted());
+					return;
+				}
+
+				this.stopWaitingOnUserInput();
+				socketHandler.sendMessage(new OutMessage(Message.Command.RM20).acknowledged());
+				return;
+			}
+
 			// Lets define our data received first.
 			String promptString = message.getContent(0);
-			int inputType = Integer.parseInt(message.getFlag(0));
 			String defaultInput = message.getContent(1);
 			String unitInput = message.getContent(2);
 
@@ -125,7 +155,6 @@ public class Controller implements MainController {
 			if(inputType != 8) {
 				throw new MessageArgumentException();
 			}
-
 
 			this.showPrimaryMessage(promptString);
 
@@ -277,11 +306,16 @@ public class Controller implements MainController {
 					.acknowledged()
 						.addContent(this.userInput)
 			);
-			this.waitingOnUserInput = false;
-			this.userInput = "";
-			this.userInputAppend = "";
-			this.showPrimaryMessage(this.getCurrentWeightValue().toString());
+			this.stopWaitingOnUserInput();
 		}
+	}
+
+	private void stopWaitingOnUserInput() {
+		this.waitingOnUserInput = false;
+		this.userInput = "";
+		this.userInputAppend = "";
+		this.showPrimaryMessage(this.getCurrentWeightValue().toString());
+		this.showSecondaryMessage("");
 	}
 
 	private void handleExitKeyPress() {
