@@ -336,7 +336,7 @@ public class Controller implements MainController {
 				messageShow = message;
 				break;
 			case 11:
-				messageShow = new String(new char[message.length()]).replace("\0", message);
+				messageShow = new String(new char[message.length()-1]).replace("\0", message);
 				break;
 			default:
 				messageShow = message;
