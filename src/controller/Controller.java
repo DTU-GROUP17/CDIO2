@@ -89,7 +89,7 @@ public class Controller implements MainController {
 
 	private void setKeyStateAndSend(@NotNull KeyState state){
 		this.keyState = state;
-		socketHandler.sendMessage(new OutMessage(Message.Command.K).addFlag("A"));
+		socketHandler.sendMessage(new OutMessage(Message.Command.K).acknowledged());
 	}
 
 	private void handleQMessage(@NotNull InMessage message) {
@@ -126,15 +126,17 @@ public class Controller implements MainController {
 			}
 
 
-			this.showPrimaryMessage(message.getContent(0));
+			this.showPrimaryMessage(promptString);
 
 			// Sets the user input type and reset current user input.
-			this.showUserInputAs = Integer.parseInt(message.getFlag(0));
+			// Also sets the server to wait for user input.
+			this.showUserInputAs = inputType;
 			this.userInput = "";
+			this.waitingOnUserInput = true;
 
 			// Adds the unit to the display and shows it with the default text.
-			this.userInputAppend = message.getContent(2);
-			this.showSecondaryMessage(message.getContent(1));
+			this.userInputAppend = unitInput;
+			this.showSecondaryMessage(defaultInput);
 
 			// Sends the executed but waiting for user input command.
 			socketHandler.sendMessage(
@@ -238,11 +240,6 @@ public class Controller implements MainController {
 			HandleK4KeyState(keyPress);
 		}
 
-		System.out.println(keyPress.getCharacter());
-		System.out.println(keyPress.getKeyNumber());
-		System.out.println(keyPress.getType());
-
-
 		switch (keyPress.getType()) {
 			case SOFTBUTTON:
 				break;
@@ -280,6 +277,8 @@ public class Controller implements MainController {
 			);
 			this.waitingOnUserInput = false;
 			this.userInput = "";
+			this.userInputAppend = "";
+			this.showPrimaryMessage(this.getCurrentWeightValue().toString());
 		}
 	}
 

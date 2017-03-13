@@ -41,7 +41,6 @@ public class SocketConnection extends SocketController {
 
 			while (!Objects.equals(received, "")){
 				received = inStream.readLine();
-				System.out.println("received = " + received);
 				this.notifyAll(InMessage.fromString(received));
 			}
 		} catch (IOException e) {
