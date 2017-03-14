@@ -19,6 +19,7 @@ public class DummyClient{
 
 	public DummyClient(String uri, int port) throws Exception {
 		this.socket = new Socket(uri, port);
+		this.socket.setSoTimeout(1000); // 1 sec timeout
 		this.out = new PrintWriter(socket.getOutputStream(), true);
 		this.in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream())

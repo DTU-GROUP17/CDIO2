@@ -56,6 +56,10 @@ public abstract class Message<T extends Message<T>> {
 		return this.addFlag("S");
 	}
 
+	public T weightWithValue(double value, String unit) {
+		return this.addFlag("S "+String.format("%10s", value)+" "+unit);
+	}
+
 	public T halted() {
 		return this.addFlag("I");
 	}

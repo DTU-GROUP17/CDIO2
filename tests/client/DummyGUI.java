@@ -6,27 +6,33 @@ import weight.WeightInterfaceController;
 
 public class DummyGUI implements WeightInterfaceController {
 	public String primaryDisplay;
+	public String secondaryDisplay;
+	private Observable<KeyPress> keyPressObservable;
+	private Observable<Double> doubleObservable;
 
+	public DummyGUI() {
+		this.keyPressObservable = new Observable<>();
+		this.doubleObservable = new Observable<>();
+	}
 
 	@Override
 	public Observable<KeyPress> getKeyFeed() {
-		return new Observable<>();
+		return keyPressObservable;
 	}
 
 	@Override
 	public Observable<Double> getWeightFeed() {
-		return new Observable<>();
+		return doubleObservable;
 	}
 
 	@Override
 	public void showMessagePrimaryDisplay(String string) {
 		this.primaryDisplay = string;
-		System.out.println(primaryDisplay);
 	}
 
 	@Override
 	public void showMessageSecondaryDisplay(String string) {
-
+		this.secondaryDisplay = string;
 	}
 
 	@Override

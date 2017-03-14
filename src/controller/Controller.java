@@ -6,10 +6,6 @@ import socket.*;
 import weight.WeightInterfaceController;
 import weight.KeyPress;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-
 /**
  * Controller - integrating input from socket and ui. Implements ISocketObserver and IUIObserver to handle this.
  * @author Christian Budtz
@@ -19,7 +15,7 @@ import java.lang.reflect.Method;
 public class Controller implements MainController {
 
 	private SocketController socketHandler;
-	public WeightInterfaceController weightInterface;
+	WeightInterfaceController weightInterface;
 	private KeyState keyState = KeyState.K1;
 
 	private double weightValue;
@@ -125,12 +121,17 @@ public class Controller implements MainController {
 		System.exit(0);
 	}
 
+	/**
+	 * B - Sets the current weight on the weight
+	 *
+	 * @param message received from socket
+	 */
 	private void handleBMessage(@NotNull InMessage message){
 		try {
 			this.weightValue = Double.parseDouble(message.getFlag(0));
 			socketHandler.sendMessage(
 				new OutMessage(Message.Command.B)
-					.waitingForUserInput()
+					.acknowledged()
 			);
 		} catch (MessageArgumentException e){
 			socketHandler.sendMessage(
@@ -156,6 +157,11 @@ public class Controller implements MainController {
 		);
 	}
 
+	/**
+	 * Handles all unknown messages.
+	 *
+	 * @param message received from socket
+	 */
 	private void handleUnknownMessage(@NotNull InMessage message){
 		this.socketHandler.sendMessage(
 			new OutMessage(Message.Command.ES)
@@ -300,7 +306,7 @@ public class Controller implements MainController {
 	}
 
 	/**
-	 * S - Key control
+	 * K - Key control
 	 *
 	 * @param message received from socket
 	 */
@@ -425,7 +431,7 @@ public class Controller implements MainController {
 
 	@NotNull
 	@Contract(pure = true)
-	private Double getCurrentWeightValue(){
+	public Double getCurrentWeightValue(){
 		return this.weightValue-this.taraValue;
 	}
 
@@ -445,6 +451,11 @@ public class Controller implements MainController {
 			default:
 				messageShow = message;
 		}
-		this.weightInterface.showMessageSecondaryDisplay(messageShow+" "+this.userInputAppend);
+		if(this.userInputAppend.equals("")) {
+			this.weightInterface.showMessageSecondaryDisplay(messageShow);
+		}
+		else {
+			this.weightInterface.showMessageSecondaryDisplay(messageShow+" "+this.userInputAppend);
+		}
 	}
 }

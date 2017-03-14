@@ -9,6 +9,7 @@ public class SocketConnection extends SocketController {
 
 	private BufferedReader inStream;
 	private PrintWriter outStream;
+	public ServerSocket serverSocket;
 
 	public SocketConnection(int port) {
 		super(port);
@@ -23,7 +24,8 @@ public class SocketConnection extends SocketController {
 	@Override
 	public void run() {
 		try (ServerSocket listeningSocket = new ServerSocket(this.port)){
-			while (true){
+			serverSocket = listeningSocket;
+			while (listeningSocket.isBound()){
 				this.waitForConnections(listeningSocket);
 			}		
 		} catch (IOException e) {
