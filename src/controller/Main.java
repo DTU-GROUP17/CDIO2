@@ -9,10 +9,18 @@ import weight.gui.WeightGUI;
  *
  */
 public class Main {
+	public static int port = 8000;
 
 	public static void main(String[] args) {
+		try {
+			port = args.length == 1 ? Integer.parseInt(args[0]) : port;
+		}
+		catch (NumberFormatException ignored) {
+		}
+
+
 		new Controller(
-			new SocketConnection(6700),
+			new SocketConnection(port),
 			new WeightGUI()
 		)
 		.start();

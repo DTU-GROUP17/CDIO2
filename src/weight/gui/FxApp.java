@@ -1,5 +1,6 @@
 package weight.gui;
 
+import controller.Main;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -21,7 +22,7 @@ public class FxApp extends Application {
 	static final String[] str_lower = {".", "abc", "def", "ghi", "jkl", "mno", "pqr", "stu", "vxy", "z"};
 	static final String[] str_upper = {".", "ABC", "DEF", "GHI", "JKL", "MNO", "PQR", "STU", "VXY", "Z"};
 	private final int DELAY = 333;
-	private Text txtload, txtbottom;
+	private Text txtload, txtbottom, txtPort;
 	private final Text[] txtsft = new Text[6];
 	private final Text[] txtinfo = new Text[4];
 	@FXML
@@ -121,6 +122,8 @@ public class FxApp extends Application {
 			btnCancel = (Button) loader.getNamespace().get("btnCancel");
 			btnCancel.setOnAction(event -> onCancelButtonPressed());
 
+			txtPort = (Text) loader.getNamespace().get("portNumber");
+			txtPort.setText("Port: "+ Main.port);
 
 			primaryStage.setScene(scene);
 			primaryStage.show();
